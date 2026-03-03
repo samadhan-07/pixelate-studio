@@ -1,0 +1,170 @@
+!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIXELATE — Portrait Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --panel: #10101a;
+    --border: #1e1e2e;
+    --accent: #00ff88;
+    --accent2: #ff2d6b;
+    --accent3: #ffd900;
+    --text: #e0e0f0;
+    --muted: #4a4a6a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Share Tech Mono', monospace; min-height: 100vh; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px); pointer-events: none; z-index: 1000; }
+  body::after { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(0,255,136,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,0.03) 1px,transparent 1px); background-size: 32px 32px; pointer-events: none; z-index: 0; }
+  .wrapper { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 24px 60px; }
+  header { padding: 40px 0 32px; display: flex; align-items: baseline; gap: 16px; border-bottom: 1px solid var(--border); margin-bottom: 40px; flex-wrap: wrap; }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 64px; letter-spacing: 6px; line-height: 1; color: var(--accent); text-shadow: 0 0 30px rgba(0,255,136,0.4), 4px 4px 0 rgba(0,255,136,0.15); }
+  .logo span { color: var(--accent2); text-shadow: 0 0 30px rgba(255,45,107,0.4), 4px 4px 0 rgba(255,45,107,0.15); }
+  .tagline { font-size: 11px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; padding-bottom: 4px; }
+  .main-grid { display: grid; grid-template-columns: 300px 1fr; gap: 24px; align-items: start; }
+  .controls { background: var(--panel); border: 1px solid var(--border); padding: 28px; position: sticky; top: 24px; }
+  .controls::before { content: ''; display: block; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3)); margin: -28px -28px 24px; }
+  .section-label { font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .upload-zone { border: 2px dashed var(--muted); padding: 28px 16px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 28px; position: relative; overflow: hidden; }
+  .upload-zone:hover, .upload-zone.drag-over { border-color: var(--accent); background: rgba(0,255,136,0.04); }
+  .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-icon { font-size: 32px; display: block; margin-bottom: 8px; color: var(--muted); }
+  .upload-zone p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .upload-zone p strong { color: var(--accent); display: block; font-size: 13px; margin-bottom: 4px; }
+  .control-group { margin-bottom: 22px; }
+  .control-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .control-name { font-size: 11px; letter-spacing: 2px; color: var(--text); text-transform: uppercase; }
+  .control-val { font-size: 13px; color: var(--accent); min-width: 36px; text-align: right; }
+  input[type="range"] { -webkit-appearance: none; width: 100%; height: 3px; background: var(--border); outline: none; cursor: pointer; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: var(--accent); cursor: pointer; border: none; box-shadow: 0 0 8px rgba(0,255,136,0.6); }
+  .palette-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 22px; }
+  .palette-btn { padding: 7px 6px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 1px; cursor: pointer; text-transform: uppercase; transition: all 0.15s; text-align: center; }
+  .palette-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .palette-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: bold; }
+  .toggle-group { display: flex; margin-bottom: 22px; }
+  .toggle-btn { flex: 1; padding: 8px 4px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 1px; cursor: pointer; text-transform: uppercase; transition: all 0.15s; text-align: center; }
+  .toggle-btn+.toggle-btn { border-left: none; }
+  .toggle-btn.active { background: rgba(0,255,136,0.1); color: var(--accent); border-color: var(--accent); }
+  .btn-pixelate { width: 100%; padding: 16px; background: var(--accent); color: var(--bg); border: none; font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 4px; cursor: pointer; position: relative; overflow: hidden; transition: all 0.2s; margin-bottom: 10px; }
+  .btn-pixelate::before { content: ''; position: absolute; inset: 0; background: linear-gradient(120deg,transparent 0%,rgba(255,255,255,0.2) 50%,transparent 100%); transform: translateX(-100%); transition: transform 0.4s; }
+  .btn-pixelate:hover::before { transform: translateX(100%); }
+  .btn-pixelate:hover { box-shadow: 0 0 24px rgba(0,255,136,0.5); }
+  .btn-pixelate:disabled { background: var(--muted); cursor: not-allowed; box-shadow: none; }
+  .btn-download { width: 100%; padding: 10px; background: transparent; color: var(--accent2); border: 1px solid var(--accent2); font-family: 'Share Tech Mono', monospace; font-size: 12px; letter-spacing: 3px; cursor: pointer; text-transform: uppercase; transition: all 0.2s; display: none; }
+  .btn-download:hover { background: rgba(255,45,107,0.1); box-shadow: 0 0 16px rgba(255,45,107,0.3); }
+  .canvas-area { min-height: 500px; display: flex; flex-direction: column; gap: 20px; }
+  .canvas-panel { background: var(--panel); border: 1px solid var(--border); position: relative; overflow: hidden; }
+  .canvas-panel-header { padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; }
+  .dot { width: 6px; height: 6px; display: inline-block; margin-right: 6px; }
+  .dot-green { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .dot-red { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+  .canvas-body { padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 280px; }
+  .empty-state { text-align: center; color: var(--muted); }
+  .empty-state p { font-size: 11px; letter-spacing: 2px; line-height: 1.8; }
+  canvas { max-width: 100%; height: auto; display: block; image-rendering: pixelated; }
+  .status-bar { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 1px solid var(--border); font-size: 10px; letter-spacing: 2px; color: var(--muted); flex-wrap: wrap; gap: 6px; }
+  .status-dot { width: 6px; height: 6px; background: var(--muted); display: inline-block; margin-right: 6px; animation: blink 1.2s step-end infinite; }
+  .status-dot.active { background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: none; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  .processing { position: absolute; inset: 0; background: rgba(10,10,15,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; gap: 16px; z-index: 10; }
+  .processing.show { display: flex; }
+  .processing-text { font-size: 12px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; }
+  .pixel-loader { display: grid; grid-template-columns: repeat(5,10px); gap: 3px; }
+  .pixel-loader div { width: 10px; height: 10px; background: var(--accent); animation: pixelPulse 0.8s ease-in-out infinite; }
+  .pixel-loader div:nth-child(2){animation-delay:.1s}.pixel-loader div:nth-child(3){animation-delay:.2s}.pixel-loader div:nth-child(4){animation-delay:.3s}.pixel-loader div:nth-child(5){animation-delay:.4s}
+  @keyframes pixelPulse { 0%,100%{opacity:.2;transform:scale(.7)} 50%{opacity:1;transform:scale(1)} }
+  @media(max-width:768px){ .main-grid{grid-template-columns:1fr} .logo{font-size:44px} .controls{position:static} }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <header>
+    <div class="logo">PIXEL<span>ATE</span></div>
+    <div class="tagline">Portrait Studio v1.0 // Retro Pixel Engine</div>
+  </header>
+  <div class="main-grid">
+    <div class="controls">
+      <div class="section-label">Input</div>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept="image/*">
+        <span class="upload-icon">&#x2B21;</span>
+        <p><strong>Drop image here</strong>or click to browse<br>PNG &middot; JPG &middot; WEBP &middot; GIF</p>
+      </div>
+      <div class="section-label">Pixel Size</div>
+      <div class="control-group">
+        <div class="control-row">
+          <span class="control-name">Grid Resolution</span>
+          <span class="control-val" id="pixelSizeVal">8px</span>
+        </div>
+        <input type="range" id="pixelSize" min="2" max="32" value="8" step="1">
+      </div>
+      <div class="section-label">Adjustments</div>
+      <div class="control-group">
+        <div class="control-row"><span class="control-name">Saturation</span><span class="control-val" id="saturationVal">100%</span></div>
+        <input type="range" id="saturation" min="0" max="200" value="100" step="5">
+      </div>
+      <div class="control-group">
+        <div class="control-row"><span class="control-name">Contrast</span><span class="control-val" id="contrastVal">100%</span></div>
+        <input type="range" id="contrast" min="50" max="200" value="100" step="5">
+      </div>
+      <div class="control-group">
+        <div class="control-row"><span class="control-name">Brightness</span><span class="control-val" id="brightnessVal">100%</span></div>
+        <input type="range" id="brightness" min="50" max="200" value="100" step="5">
+      </div>
+      <div class="section-label">Palette</div>
+      <div class="palette-grid" id="paletteGrid">
+        <button class="palette-btn active" data-palette="original">Original</button>
+        <button class="palette-btn" data-palette="gameboy">Game Boy</button>
+        <button class="palette-btn" data-palette="c64">C64</button>
+        <button class="palette-btn" data-palette="nes">NES</button>
+        <button class="palette-btn" data-palette="grayscale">Grayscale</button>
+        <button class="palette-btn" data-palette="sepia">Sepia</button>
+      </div>
+      <div class="section-label">Style</div>
+      <div class="toggle-group" id="styleGroup">
+        <button class="toggle-btn active" data-style="filled">Filled</button>
+        <button class="toggle-btn" data-style="outlined">Outlined</button>
+        <button class="toggle-btn" data-style="dots">Dots</button>
+      </div>
+      <button class="btn-pixelate" id="btnPixelate" disabled>PIXELATE</button>
+      <button class="btn-download" id="btnDownload">&#8595; Save PNG</button>
+    </div>
+    <div class="canvas-area">
+      <div class="canvas-panel">
+        <div class="canvas-panel-header">
+          <span><span class="dot dot-red"></span>Source</span>
+          <span id="sourceInfo">No file loaded</span>
+        </div>
+        <div class="canvas-body" id="sourceBody">
+          <div class="empty-state"><p>Upload an image<br>to begin</p></div>
+        </div>
+      </div>
+      <div class="canvas-panel" style="position:relative;">
+        <div class="canvas-panel-header">
+          <span><span class="dot dot-green"></span>Output</span>
+          <span id="outputInfo">Awaiting render</span>
+        </div>
+        <div class="canvas-body" id="outputBody">
+          <div class="empty-state"><p>Pixel output<br>will appear here</p></div>
+        </div>
+        <div class="processing" id="processingOverlay">
+          <div class="pixel-loader"><div></div><div></div><div></div><div></div><div></div></div>
+          <div class="processing-text">Rendering pixels...</div>
+        </div>
+      </div>
+      <div class="status-bar">
+        <span><span class="status-dot" id="statusDot"></span><span id="statusText">Ready // Upload an image to start</span></span>
+        <span id="statsText"></span>
+      </div>
+    </div>
+  </div>
+</div>
+<canvas id="hiddenCanvas" style="display:none;"></canvas>
+<script src="app.js"></script>
+</body>
+</html>
